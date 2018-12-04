@@ -4,7 +4,29 @@
 #include <stdlib.h>
 #include <string.h>
 
+describe(registers) {
+	it("write/read registers") {
+		void * buf = malloc(REG_SIZE+1);
+		registers * reg = malloc(sizeof(struct registers));
+		assertneq(buf, NULL);
+		assertneq(reg,NULL);
 
+		// set registers
+		asserteq(set_register(reg, 1, "dead", strlen("dead")),0);
+		asserteq(set_register(reg, 2, "beef", strlen("beef")),0);
+		
+		// verify first
+		asserteq(get_register(reg, 1, buf), 0);
+		asserteq_buf(buf, "dead", REG_SIZE/8);
+
+		// verify second	
+		asserteq(get_register(reg, 2, buf), 0);
+		asserteq_buf(buf, "beef", REG_SIZE/8); 
+		defer(free(reg));
+		defer(free(buf));
+	}
+
+}
 
 describe(stack) {
 	it("stack initializes") {
@@ -64,7 +86,7 @@ describe(stack) {
 			memcpy(tmp, "12345678912345600", REG_SIZE-1);
 		
 			// push > INIT_STACK_SIZE data onto stack
-			while(stack->total_size == INIT_STACK_SIZE) {
+			while(stack->total_size <= INIT_STACK_SIZE + REG_SIZE*STACK_RESIZE*2) {
 				asserteq(push_stack(stack,tmp), 0);
 				asserteq_buf(stack->mem, tmp, REG_SIZE);
 			}
