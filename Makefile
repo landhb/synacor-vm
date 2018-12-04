@@ -9,16 +9,16 @@ CFLAGS := -Wall -Werror --std=gnu99 -g3 -DSNOW_ENABLED
 #endif
 
 # default is to build without address sanitizer enabled
-all: test
+all: 
 
 # the noasan version can be used with valgrind
-all_noasan: test_noasan
+all_noasan: 
 
 
-test: stack.o tests/test.o
+test: stack.o registers.c tests/test.o
 	$(CC) -o $@ $(CFLAGS) $(ASAN_FLAGS) $^ $(LDFLAGS) $(ASAN_LIBS)
 	
-test_noasan: stack_noasan.o tests/test_noasan.o
+test_noasan: stack_noasan.o registers_noasan.o tests/test_noasan.o
 	$(CC) -o $@ $(CFLAGS) $^ $(LDFLAGS) 
 
 

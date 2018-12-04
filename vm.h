@@ -36,17 +36,17 @@ typedef struct stack_info {
  * Registers - 8 total
  * 	
  */
-typedef struct registers {
-	unsigned r0:15;
-	unsigned r1:15;
-	unsigned r2:15;
-	unsigned r3:15;
-	unsigned r4:15;
-	unsigned r5:15;
-	unsigned r6:15;
-	unsigned r7:15;
-} registers;
-
+struct registers {
+	unsigned r0:REG_SIZE;
+	unsigned r1:REG_SIZE;
+	unsigned r2:REG_SIZE;
+	unsigned r3:REG_SIZE;
+	unsigned r4:REG_SIZE;
+	unsigned r5:REG_SIZE;
+	unsigned r6:REG_SIZE;
+	unsigned r7:REG_SIZE;
+} __attribute__( ( packed ) ); 
+typedef struct registers registers;
 
 // stack.c
 stack_info * stack_init(int size);
@@ -54,4 +54,8 @@ int push_stack(stack_info * stack, void * data);
 int pop_stack(stack_info * stack, void * return_data);
 void cleanup_stack(stack_info * stack);
 
+
+// registers.c
+int set_register(registers * reg, int num, void * data, int len);
+int get_register(registers * reg, int num, void * data);
 #endif 

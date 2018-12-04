@@ -43,7 +43,7 @@ int push_stack(stack_info * stack, void * data) {
 		}
 	}
 
-	// push onto stack	
+	// push onto stack
 	memcpy(stack->mem + REG_SIZE*stack->num_elements, data, REG_SIZE);
 	stack->num_elements++;
 	return 0;
