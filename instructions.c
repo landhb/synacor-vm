@@ -76,7 +76,7 @@ int run_instruction(char * buffer, int i, registers * reg, stack_info * stack) {
 		
 			// check if destination is valid
 			if(!VALID_REGISTER(*(uint16_t*)(buffer+i+REG_SIZE_BYTES))) {
-				return -1;
+				exit(-1);
 			}
 
 			a = *(uint16_t*)(buffer+i+REG_SIZE_BYTES)-32768;
@@ -93,7 +93,7 @@ int run_instruction(char * buffer, int i, registers * reg, stack_info * stack) {
 		case 5: // gt a b c (set register a to 1 if b > c)
 			// check if destination is valid
 			if(!VALID_REGISTER(*(uint16_t*)(buffer+i+REG_SIZE_BYTES))) {
-				return -1;
+				exit(-1);
 			}
 
 			a = *(uint16_t*)(buffer+i+REG_SIZE_BYTES)-32768;
@@ -109,9 +109,28 @@ int run_instruction(char * buffer, int i, registers * reg, stack_info * stack) {
 		
 		case 6: // jmp <a>
 			if (!VALID_MEMORY(*(uint16_t*)(buffer+i+REG_SIZE_BYTES))) {
-				return -1;
+				exit(-1);
 			}
 			return (*(int16_t*)(buffer+i+REG_SIZE_BYTES))-i;
+
+		case 7: // jt <a> <b> (if a !=0 jmp <b>)
+			a = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES));
+			if(a == 0)
+				return REG_SIZE_BYTES*3;
+			if (!VALID_MEMORY(*(uint16_t*)(buffer+i+REG_SIZE_BYTES*2))) {
+                                exit(-1);
+                        }
+			return (*(int16_t*)(buffer+i+REG_SIZE_BYTES*2))-i;
+		
+		case 8: // jf <a> <b> (if a == 0 jmp <b>)
+			a = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES));
+                        if(a != 0) 
+                                return REG_SIZE_BYTES*3;
+                        if (!VALID_MEMORY(*(uint16_t*)(buffer+i+REG_SIZE_BYTES*2))) {
+                                exit(-1);
+                        }
+                        return (*(int16_t*)(buffer+i+REG_SIZE_BYTES*2))-i;
+
 		default: // invalid instruction
 			exit(-1);
 

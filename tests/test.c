@@ -310,6 +310,49 @@ describe(instructions) {
 		defer(cleanup_stack(stack));
 		defer(free(reg));	
 	}
+	it("jt") {
+		stack_info * stack = stack_init(INIT_STACK_SIZE);
+		registers * reg = malloc(sizeof(struct registers));
+		assertneq(stack, NULL);
+
+		// test instruction
+		char *buf;
+		buf = malloc(0x20);
+		memcpy(buf, "\x07\x00\x01\x00\x10\x00", 6); // jt 0x0001 0x0010
+		
+		// should jump, return 0x0010-0 = 16
+		asserteq(run_instruction(buf, 0, reg, stack),16);	
+
+		// test <a>=0, should not jump, return 6	
+		memcpy(buf+0x0010, "\x07\x00\x00\x00\x05\x00", 4); 
+		asserteq(run_instruction(buf, 0x0010, reg, stack),6);	
+	
+		defer(free(buf));
+		defer(cleanup_stack(stack));
+		defer(free(reg));	
+	}
+	it("jf") {
+		stack_info * stack = stack_init(INIT_STACK_SIZE);
+		registers * reg = malloc(sizeof(struct registers));
+		assertneq(stack, NULL);
+
+		// test instruction
+		char *buf;
+		buf = malloc(0x20);
+		memcpy(buf, "\x08\x00\x00\x00\x10\x00", 6); // jf 0x0000 0x0010
+		
+		// should jump, return 0x0010-0 = 16
+		asserteq(run_instruction(buf, 0, reg, stack),16);	
+
+		// test <a>!=0, should not jump, return 6	
+		memcpy(buf+0x0010, "\x08\x00\x01\x00\x05\x00", 4); 
+		asserteq(run_instruction(buf, 0x0010, reg, stack),6);	
+	
+		defer(free(buf));
+		defer(cleanup_stack(stack));
+		defer(free(reg));	
+	}
+
 }
 
 snow_main();
