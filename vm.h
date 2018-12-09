@@ -1,6 +1,8 @@
 #ifndef __SYNACOR_VM__
 #define __SYNACOR_VM__
 
+#include <stdint.h>
+
 // architecture constants
 #define ADDRESS_SIZE 15
 #define REG_SIZE 16
@@ -49,6 +51,7 @@ void print_stack(stack_info * stack);
 // registers primatives
 int set_register(registers * reg, int num, void * data, int len);
 int get_register(registers * reg, int num, void * data);
+uint16_t get_reg_immediate(registers * reg, uint16_t val);
 
 // instructions
 int run_instruction(char * buffer, int i, registers * reg, stack_info * stack);
