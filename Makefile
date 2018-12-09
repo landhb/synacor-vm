@@ -15,10 +15,10 @@ all:
 all_noasan: 
 
 
-test: stack.o registers.c tests/test.o
+test: stack.o registers.c instructions.c tests/test.o
 	$(CC) -o $@ $(CFLAGS) $(ASAN_FLAGS) $^ $(LDFLAGS) $(ASAN_LIBS)
 	
-test_noasan: stack_noasan.o registers_noasan.o tests/test_noasan.o
+test_noasan: stack_noasan.o registers_noasan.o instructions_noasan.o tests/test_noasan.o
 	$(CC) -o $@ $(CFLAGS) $^ $(LDFLAGS) 
 
 

@@ -26,25 +26,25 @@ stack_info * stack_init(int size) {
 
 
 /*
- * Push an item onto the stack, resize if necessary
+ * Push an item onto the stack from a register, resize if necessary
  */
-int push_stack(stack_info * stack, void * data) {
+int push_stack(stack_info * stack, registers * reg, int reg_num) {
 	
 	char * old_mem;
 	
 	// check resize
 	old_mem = stack->mem;
-	if(stack->total_size < REG_SIZE*(stack->num_elements+1)) {
-		stack->mem = realloc(stack->mem, stack->total_size + REG_SIZE*STACK_RESIZE);
-		stack->total_size += REG_SIZE*STACK_RESIZE;
+	if(stack->total_size < REG_SIZE_BYTES*(stack->num_elements+1)) {
+		stack->mem = realloc(stack->mem, stack->total_size + REG_SIZE_BYTES*STACK_RESIZE);
+		stack->total_size += REG_SIZE_BYTES*STACK_RESIZE;
 		if(stack->mem == NULL) {
 			stack->mem = old_mem;
 			return -1;
 		}
 	}
 
-	// push onto stack
-	memcpy(stack->mem + REG_SIZE*stack->num_elements, data, REG_SIZE);
+	// push register onto stack
+	get_register(reg, reg_num, stack->mem + REG_SIZE_BYTES*stack->num_elements); 
 	stack->num_elements++;
 	return 0;
 }
@@ -52,10 +52,10 @@ int push_stack(stack_info * stack, void * data) {
 
 
 /*
- * Pop an item from the stack
+ * Pop an item from the stack into a register
  */ 
-int pop_stack(stack_info * stack, void * return_data) {
-	memcpy(return_data, stack->mem + REG_SIZE*(stack->num_elements-1), REG_SIZE);
+int pop_stack(stack_info * stack, registers * reg, int reg_num) {
+	set_register(reg, reg_num, stack->mem + REG_SIZE_BYTES*(stack->num_elements-1), REG_SIZE_BYTES);
 	stack->num_elements--;
 	return 0;
 }

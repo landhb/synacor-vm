@@ -4,10 +4,15 @@
 // architecture constants
 #define ADDRESS_SIZE 15
 #define REG_SIZE 16
+#define REG_SIZE_BYTES REG_SIZE/8
 
 // stack constants
 #define INIT_STACK_SIZE 80
 #define STACK_RESIZE 3
+
+#define GET_RIGHTMOST_16_BITS(x) ((x) & (unsigned int)0x0000FFFF)
+#define GET_HIGH_8_BITS(x) (((x) & ~((unsigned short)0xFF)) >> 8)
+#define GET_LOW_8_BITS(x) ((x) & (unsigned short)0xFF)
 
 /* 
  * Memory abstraction
@@ -48,14 +53,17 @@ struct registers {
 } __attribute__( ( packed ) ); 
 typedef struct registers registers;
 
-// stack.c
+// stack primatives
 stack_info * stack_init(int size);
-int push_stack(stack_info * stack, void * data);
-int pop_stack(stack_info * stack, void * return_data);
+int push_stack(stack_info * stack, registers * reg, int reg_num);
+int pop_stack(stack_info * stack, registers * reg, int reg_num);
 void cleanup_stack(stack_info * stack);
 
 
-// registers.c
+// registers primatives
 int set_register(registers * reg, int num, void * data, int len);
 int get_register(registers * reg, int num, void * data);
+
+// instructions
+int run_instruction(char * buffer, int i, registers * reg, stack_info * stack);
 #endif 
