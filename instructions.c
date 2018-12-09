@@ -60,7 +60,16 @@ int run_instruction(char * buffer, int i, registers * reg, stack_info * stack) {
 			} 
 			// TODO? exit on invalid address/register
 			return REG_SIZE_BYTES*2;
-		
+	
+		case 3: // pop <a>
+			if(VALID_REGISTER(*(uint16_t*)(buffer+i+REG_SIZE_BYTES))) {
+				pop_stack(stack, reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES)-32768); 
+			}
+			// TODO? exit on invalid register
+			return REG_SIZE_BYTES*2;			
+
+		case 4: // eq a b c (set register a to 1 if b = c)
+			
 		default: // invalid instruction
 			exit(-1);
 

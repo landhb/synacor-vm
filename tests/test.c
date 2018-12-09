@@ -127,7 +127,7 @@ describe(instructions) {
 		// test instruction
 		char *buf;
 		buf = malloc(4);
-		memcpy(buf, "\x00\x00\x01\x02", 4);
+		memcpy(buf, "\x00\x00\x01\x02", 4); // halt
 
 		// fork child to test halt() instruction
 		pid_t pid = fork();
@@ -155,7 +155,7 @@ describe(instructions) {
 		char *buf,*res;
 		buf = malloc(6);
 		res = malloc(REG_SIZE_BYTES);
-		memcpy(buf, "\x01\x00\x01\x00\x04\x00", 6);
+		memcpy(buf, "\x01\x00\x01\x00\x04\x00", 6); // set 0x0001 0x0004
 		
 		// should return 6
 		asserteq(run_instruction(buf, 0, reg, stack),6);	
@@ -177,7 +177,7 @@ describe(instructions) {
 		// test instruction
 		char *buf;
 		buf = malloc(6);
-		memcpy(buf, "\x02\x00\x01\x00\x04\x00", 6);
+		memcpy(buf, "\x02\x00\x01\x00\x04\x00", 6); // push 0x0001
 		
 		// first test pushing data directly to stack, should return 4
 		asserteq(run_instruction(buf, 0, reg, stack),4);	
@@ -195,7 +195,30 @@ describe(instructions) {
 		defer(cleanup_stack(stack));
 		defer(free(reg));	
 	}
+	it("pop") {
+		stack_info * stack = stack_init(INIT_STACK_SIZE);
+		registers * reg = malloc(sizeof(struct registers));
+		assertneq(stack, NULL);
 
+		// test instruction
+		char *buf;
+		buf = malloc(6);
+		memcpy(buf, "\x03\x00\x01\x80", 4); //pop r1
+		
+		// push test data onto the stack
+		push_stack(stack, NULL, "te", REG_SIZE_BYTES);
+
+		// pop data into register 1, should return 4
+		asserteq(run_instruction(buf, 0, reg, stack),4);	
+		
+		// test that register contains test data
+		asserteq(get_register(reg, 1, buf),0);
+		asserteq_buf(buf, "te", REG_SIZE_BYTES);
+	
+		defer(free(buf));
+		defer(cleanup_stack(stack));
+		defer(free(reg));	
+	}
 }
 
 snow_main();

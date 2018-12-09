@@ -49,7 +49,7 @@ int push_stack(stack_info * stack, registers * reg, void * data, int reg_num) {
 	if(reg != NULL && reg_num < 8 && reg_num >= 0)
 		get_register(reg, reg_num, stack->mem + REG_SIZE_BYTES*stack->num_elements); 
 	else if (data != NULL) 
-		memcpy(stack->mem + REG_SIZE_BYTES*stack->num_elements, data, REG_SIZE_BYTES);
+		memcpy(stack->mem + (stack->num_elements)*REG_SIZE_BYTES, data, REG_SIZE_BYTES);
 	stack->num_elements++;
 	return 0;
 }

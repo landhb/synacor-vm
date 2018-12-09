@@ -10,18 +10,8 @@
 #define INIT_STACK_SIZE 80
 #define STACK_RESIZE 3
 
-/* 
- * Memory abstraction
- */ 
-typedef struct vm_table_entry {
-
-	// address	
-	unsigned addr:15;
-
-	// value
-	unsigned val:16;
-
-} vm_table_entry;
+#define GET_RIGHTMOST_16_BITS(x) ((x) & (unsigned int)0x0000FFFF)
+#define VALID_REGISTER(x) ((x) <= 32775 && (x) >= 32768)
 
 /*
  * Stack abstraction
