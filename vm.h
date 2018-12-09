@@ -10,10 +10,6 @@
 #define INIT_STACK_SIZE 80
 #define STACK_RESIZE 3
 
-#define GET_RIGHTMOST_16_BITS(x) ((x) & (unsigned int)0x0000FFFF)
-#define GET_HIGH_8_BITS(x) (((x) & ~((unsigned short)0xFF)) >> 8)
-#define GET_LOW_8_BITS(x) ((x) & (unsigned short)0xFF)
-
 /* 
  * Memory abstraction
  */ 
@@ -55,10 +51,10 @@ typedef struct registers registers;
 
 // stack primatives
 stack_info * stack_init(int size);
-int push_stack(stack_info * stack, registers * reg, int reg_num);
+int push_stack(stack_info * stack, registers * reg, void * data,int reg_num);
 int pop_stack(stack_info * stack, registers * reg, int reg_num);
 void cleanup_stack(stack_info * stack);
-
+void print_stack(stack_info * stack);
 
 // registers primatives
 int set_register(registers * reg, int num, void * data, int len);

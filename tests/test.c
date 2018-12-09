@@ -52,7 +52,7 @@ describe(stack) {
 			set_register(reg, 0, tmp, REG_SIZE_BYTES);
 
 			// push onto stack
-			asserteq(push_stack(stack,reg, 0),0);
+			asserteq(push_stack(stack,reg, NULL,0),0);
 			asserteq_buf(stack->mem, tmp, REG_SIZE_BYTES);
 			defer(cleanup_stack(stack));
 			defer(free(reg));
@@ -72,7 +72,7 @@ describe(stack) {
 			set_register(reg, 0, tmp, REG_SIZE_BYTES);
 			
 			// push tmp onto stack
-			asserteq(push_stack(stack, reg, 0),0);
+			asserteq(push_stack(stack, reg, NULL,0),0);
 			asserteq_buf(stack->mem, tmp, REG_SIZE_BYTES);
 
 			// pop off stack into res
@@ -98,7 +98,7 @@ describe(stack) {
 			// push > INIT_STACK_SIZE data onto stack
 			while(stack->total_size <= INIT_STACK_SIZE + REG_SIZE_BYTES*STACK_RESIZE*2) {
 				set_register(reg, 0, tmp, REG_SIZE_BYTES);
-				asserteq(push_stack(stack,reg,0), 0);
+				asserteq(push_stack(stack,reg,NULL,0), 0);
 				asserteq_buf(stack->mem, tmp, REG_SIZE_BYTES);
 			}
 
@@ -175,22 +175,25 @@ describe(instructions) {
 		assertneq(stack, NULL);
 
 		// test instruction
-		char *buf,*res;
+		char *buf;
 		buf = malloc(6);
-		res = malloc(REG_SIZE_BYTES);
 		memcpy(buf, "\x02\x00\x01\x00\x04\x00", 6);
 		
-		// should return 4
+		// first test pushing data directly to stack, should return 4
 		asserteq(run_instruction(buf, 0, reg, stack),4);	
 		
-		// test if register was set
-		asserteq(get_register(reg, 1, res), 0);
-		asserteq_buf(res, "\x04\x00", REG_SIZE_BYTES);
-		
+		// test if \x01\x00 is on the stack 
+		asserteq_buf(stack->mem, "\x01\x00", 2);
+
+		// now test pushing from register, should still return 4
+		memcpy(buf, "\x02\x00\x06\x80", 4); // push 0x8006 -> push r6
+		set_register(reg, 6, "te", REG_SIZE_BYTES);
+		asserteq(run_instruction(buf, 0, reg, stack),4);	
+		asserteq_buf(stack->mem+(stack->num_elements-1)*REG_SIZE_BYTES, "te", REG_SIZE_BYTES);
+	
 		defer(free(buf));
 		defer(cleanup_stack(stack));
 		defer(free(reg));	
-		defer(free(res));	
 	}
 
 }

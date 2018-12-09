@@ -1,6 +1,8 @@
 #include "vm.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
+
 
 int parse_file(FILE * f, registers * reg, stack_info * stack) {
 	
@@ -48,17 +50,18 @@ int run_instruction(char * buffer, int i, registers * reg, stack_info * stack) {
 			return REG_SIZE_BYTES*3;
 		
 		case 2: // push <a>
-			if(buffer[i+REG_SIZE_BYTES] < 32767) {
+			if(*(uint16_t*)(buffer+i+REG_SIZE_BYTES) < 32767) {
 				// push memory
+				push_stack(stack, NULL, &buffer[i+REG_SIZE_BYTES], 0);
 			}
-			else if (buffer[i+REG_SIZE_BYTES] <= 32775) {
-				// push register	
-				push_stack(stack, reg, buffer[i+REG_SIZE_BYTES]-32768);
+			else if (*(uint16_t*)(buffer+i+REG_SIZE_BYTES) <= 32775) {
+				// push register
+				push_stack(stack, reg, NULL,*(uint16_t*)(buffer+i+REG_SIZE_BYTES)-32768);
 			} 
 			// TODO? exit on invalid address/register
 			return REG_SIZE_BYTES*2;
-		// invalid instruction
-		default:
+		
+		default: // invalid instruction
 			exit(-1);
 
 	}

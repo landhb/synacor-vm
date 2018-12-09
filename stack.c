@@ -1,6 +1,8 @@
 #include "vm.h"
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <stdio.h> //debugging delete
 
 /*
  * Initialize a stack of initial size 'size'
@@ -28,7 +30,7 @@ stack_info * stack_init(int size) {
 /*
  * Push an item onto the stack from a register, resize if necessary
  */
-int push_stack(stack_info * stack, registers * reg, int reg_num) {
+int push_stack(stack_info * stack, registers * reg, void * data, int reg_num) {
 	
 	char * old_mem;
 	
@@ -44,7 +46,10 @@ int push_stack(stack_info * stack, registers * reg, int reg_num) {
 	}
 
 	// push register onto stack
-	get_register(reg, reg_num, stack->mem + REG_SIZE_BYTES*stack->num_elements); 
+	if(reg != NULL && reg_num < 8 && reg_num >= 0)
+		get_register(reg, reg_num, stack->mem + REG_SIZE_BYTES*stack->num_elements); 
+	else if (data != NULL) 
+		memcpy(stack->mem + REG_SIZE_BYTES*stack->num_elements, data, REG_SIZE_BYTES);
 	stack->num_elements++;
 	return 0;
 }
@@ -66,4 +71,12 @@ int pop_stack(stack_info * stack, registers * reg, int reg_num) {
 void cleanup_stack(stack_info * stack) {
 	free(stack->mem);
 	free(stack);
+}
+
+
+// print stack for debugging
+void print_stack(stack_info * stack) {
+	for (int i = 0; i < stack->num_elements; i++) {
+		printf("%d:  %04X\n",i, *(uint16_t*)(stack->mem+(i*REG_SIZE_BYTES)));
+	}
 }
