@@ -254,7 +254,62 @@ describe(instructions) {
 		defer(cleanup_stack(stack));
 		defer(free(reg));	
 	}
+	it("gt") {
+		stack_info * stack = stack_init(INIT_STACK_SIZE);
+		registers * reg = malloc(sizeof(struct registers));
+		assertneq(stack, NULL);
 
+		// test instruction
+		char *buf;
+		buf = malloc(8);
+		memcpy(buf, "\x05\x00\x01\x80\x02\x00\x01\x00", 8); // gt r1 0x00002 0x00001
+		
+		// test 0x0002 > 0x0001, should set r1=1 and return 8
+		asserteq(run_instruction(buf, 0, reg, stack),8);	
+		
+		// test that register contains 0x01
+		asserteq(get_register(reg, 1, buf),0);
+		asserteq_buf(buf, "\x01\x00", REG_SIZE_BYTES);
+
+		// test not greater than
+		memcpy(buf, "\x05\x00\x01\x80\x01\x00\x01\x00", 8); // gt r1 0x00001 0x00001
+		asserteq(run_instruction(buf, 0, reg, stack),8);	
+		asserteq(get_register(reg, 1, buf),0);
+		asserteq_buf(buf, "\x00\x00", REG_SIZE_BYTES);
+
+		// test register comparison to data
+		memcpy(buf, "\x05\x00\x01\x80\x02\x00\x02\x80", 8); // gt r1 0x00002 r2
+		set_register(reg, 2, "\x01\x00", REG_SIZE_BYTES);
+		asserteq(run_instruction(buf, 0, reg, stack),8);	
+		asserteq(get_register(reg, 1, buf),0);
+		asserteq_buf(buf, "\x01\x00", REG_SIZE_BYTES);
+
+
+		defer(free(buf));
+		defer(cleanup_stack(stack));
+		defer(free(reg));	
+	}
+	it("jmp") {
+		stack_info * stack = stack_init(INIT_STACK_SIZE);
+		registers * reg = malloc(sizeof(struct registers));
+		assertneq(stack, NULL);
+
+		// test instruction
+		char *buf;
+		buf = malloc(0x20);
+		memcpy(buf, "\x06\x00\x10\x00", 4); // jmp 0x0010
+		
+		// should return 0x0010-0 = 16
+		asserteq(run_instruction(buf, 0, reg, stack),16);	
+
+		// test jumping back, should return 0x0010-0x0005 = -11	
+		memcpy(buf+0x0010, "\x06\x00\x05\x00", 4); // jmp 0x0005
+		asserteq(run_instruction(buf, 0x0010, reg, stack),-11);	
+	
+		defer(free(buf));
+		defer(cleanup_stack(stack));
+		defer(free(reg));	
+	}
 }
 
 snow_main();

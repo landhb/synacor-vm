@@ -14,6 +14,7 @@
 
 #define GET_RIGHTMOST_16_BITS(x) ((x) & (unsigned int)0x0000FFFF)
 #define VALID_REGISTER(x) ((x) <= 32775 && (x) >= 32768)
+#define VALID_MEMORY(x) ((x) <= 32767 && (x) >= 0)
 
 /*
  * Stack abstraction
