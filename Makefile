@@ -9,13 +9,19 @@ CFLAGS := -Wall -Werror --std=gnu99 -g3 -DSNOW_ENABLED
 #endif
 
 # default is to build without address sanitizer enabled
-all: 
+all: vm_release test_noasan 
 
-# the noasan version can be used with valgrind
-all_noasan: 
+# the debug version is built with address sanitizer
+debug: vm_debug test
 
 
-test: stack.o registers.c instructions.c tests/test.o
+vm_release: stack_noasan.o registers_noasan.o instructions_noasan.o main_noasan.o
+	$(CC) -o $@ $(CFLAGS) $^ $(LDFLAGS)
+
+vm_debug: stack.o registers.o instructions.o main.o
+	$(CC) -o $@ $(CFLAGS) $(ASAN_FLAGS) $^ $(LDFLAGS) $(ASAN_LIBS)
+
+test: stack.o registers.o instructions.o tests/test.o
 	$(CC) -o $@ $(CFLAGS) $(ASAN_FLAGS) $^ $(LDFLAGS) $(ASAN_LIBS)
 	
 test_noasan: stack_noasan.o registers_noasan.o instructions_noasan.o tests/test_noasan.o
@@ -31,5 +37,5 @@ test_noasan: stack_noasan.o registers_noasan.o instructions_noasan.o tests/test_
 .PHONY: clean
 
 clean:
-	rm -fr *.o test test_noasan tests/test.o 
+	rm -fr *.o test test_noasan vm_release vm_debug tests/test.o 
 

@@ -2,6 +2,7 @@
 #define __SYNACOR_VM__
 
 #include <stdint.h>
+#include <stdio.h>
 
 // architecture constants
 #define ADDRESS_SIZE 15
@@ -15,6 +16,7 @@
 #define GET_RIGHTMOST_16_BITS(x) ((x) & (unsigned int)0x0000FFFF)
 #define VALID_REGISTER(x) ((x) <= 32775 && (x) >= 32768)
 #define VALID_MEMORY(x) ((x) <= 32767 && (x) >= 0)
+#define VIRT_TO_PHYS(x) ((x)
 
 /*
  * Stack abstraction
@@ -56,4 +58,5 @@ uint16_t get_reg_immediate(registers * reg, uint16_t val);
 
 // instructions
 int run_instruction(char * buffer, int i, registers * reg, stack_info * stack);
-#endif 
+int parse_file(FILE *f, registers * reg, stack_info* stack);
+#endif // __SYNACORE_VM__ 

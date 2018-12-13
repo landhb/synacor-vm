@@ -1,7 +1,6 @@
 #include "vm.h"
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h> //debugging delete
 
 /*
  * Initialize a stack of initial size 'size'

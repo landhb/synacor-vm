@@ -1,6 +1,5 @@
 #include "vm.h"
 #include <stdlib.h>
-#include <stdio.h>
 
 
 int parse_file(FILE * f, registers * reg, stack_info * stack) {
@@ -26,10 +25,12 @@ int parse_file(FILE * f, registers * reg, stack_info * stack) {
 	// read the entire file into memory
 	fread(buffer, file_len, 1, f);
 	fclose(f);
+	printf("Read %lu bytes from disk\n", file_len);
 
 	// step through instructions
 	i=0;
 	while(i < file_len) {
+		//printf("ip @ %d\n", i);
 		i+=run_instruction(buffer, i, reg, stack);	
 	}
 
@@ -43,7 +44,7 @@ int run_instruction(char * buffer, int i, registers * reg, stack_info * stack) {
 	uint16_t a = 0;
 	uint16_t b = 0;
 	uint16_t c = 0;
-			
+	//printf("\tinst: %d\n",GET_RIGHTMOST_16_BITS(buffer[i]));		
 	switch(GET_RIGHTMOST_16_BITS(buffer[i])) {
 		
 		case 0: //halt
@@ -73,38 +74,23 @@ int run_instruction(char * buffer, int i, registers * reg, stack_info * stack) {
 			return REG_SIZE_BYTES*2;			
 
 		case 4: // eq a b c (set register a to 1 if b = c)
-		
-			// check if destination is valid
 			if(!VALID_REGISTER(*(uint16_t*)(buffer+i+REG_SIZE_BYTES))) {
 				exit(-1);
 			}
-
 			a = *(uint16_t*)(buffer+i+REG_SIZE_BYTES)-32768;
 			b = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES*2));
-			c = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES*3));
-			
-			if(b == c) {
-				set_register(reg, a, "\x01\x00", REG_SIZE_BYTES);
-			} else {
-				set_register(reg, a, "\x00\x00", REG_SIZE_BYTES);
-			}	
+			c = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES*3));	
+			set_register(reg, a, b==c ? "\x01\x00" : "\x00\x00", REG_SIZE_BYTES);
 			return REG_SIZE_BYTES*4;
 	
 		case 5: // gt a b c (set register a to 1 if b > c)
-			// check if destination is valid
 			if(!VALID_REGISTER(*(uint16_t*)(buffer+i+REG_SIZE_BYTES))) {
 				exit(-1);
 			}
-
 			a = *(uint16_t*)(buffer+i+REG_SIZE_BYTES)-32768;
 			b = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES*2));
 			c = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES*3));
-			
-			if(b > c) {
-				set_register(reg, a, "\x01\x00", REG_SIZE_BYTES);
-			} else {
-				set_register(reg, a, "\x00\x00", REG_SIZE_BYTES);
-			}	
+			set_register(reg, a, b > c ? "\x01\x00" : "\x00\x00", REG_SIZE_BYTES);
 			return REG_SIZE_BYTES*4;
 		
 		case 6: // jmp <a>
@@ -131,7 +117,103 @@ int run_instruction(char * buffer, int i, registers * reg, stack_info * stack) {
                         }
                         return (*(int16_t*)(buffer+i+REG_SIZE_BYTES*2))-i;
 
+		case 9: // add <a> <b> <c>
+			if(!VALID_REGISTER(*(uint16_t*)(buffer+i+REG_SIZE_BYTES))) {
+				exit(-1);
+			}
+			a = *(uint16_t*)(buffer+i+REG_SIZE_BYTES)-32768;
+			b = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES*2));
+			c = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES*3));
+			b = (b+c)%32768;
+			set_register(reg, a, &b, sizeof(uint16_t));
+			return REG_SIZE_BYTES*4;
+		case 10: // mult <a> <b> <c>
+			if(!VALID_REGISTER(*(uint16_t*)(buffer+i+REG_SIZE_BYTES))) {
+				exit(-1);
+			}
+			a = *(uint16_t*)(buffer+i+REG_SIZE_BYTES)-32768;
+			b = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES*2));
+			c = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES*3));
+			b = (b*c)%32768;
+			set_register(reg, a, &b, sizeof(uint16_t));
+			return REG_SIZE_BYTES*4;
+		case 11: // mod <a> <b> <c>
+			if(!VALID_REGISTER(*(uint16_t*)(buffer+i+REG_SIZE_BYTES))) {
+				exit(-1);
+			}
+			a = *(uint16_t*)(buffer+i+REG_SIZE_BYTES)-32768;
+			b = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES*2));
+			c = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES*3));
+			b = (b%c)%32768;
+			set_register(reg, a, &b, sizeof(uint16_t));
+			return REG_SIZE_BYTES*4;
+		case 12: // and <a> <b> <c>
+			if(!VALID_REGISTER(*(uint16_t*)(buffer+i+REG_SIZE_BYTES))) {
+				exit(-1);
+			}
+			a = *(uint16_t*)(buffer+i+REG_SIZE_BYTES)-32768;
+			b = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES*2));
+			c = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES*3));
+			b = (b&c)%32768;
+			set_register(reg, a, &b, sizeof(uint16_t));
+			return REG_SIZE_BYTES*4;
+		case 13: // or <a> <b> <c>
+			if(!VALID_REGISTER(*(uint16_t*)(buffer+i+REG_SIZE_BYTES))) {
+				exit(-1);
+			}
+			a = *(uint16_t*)(buffer+i+REG_SIZE_BYTES)-32768;
+			b = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES*2));
+			c = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES*3));
+			b = (b|c)%32768;
+			set_register(reg, a, &b, sizeof(uint16_t));
+			return REG_SIZE_BYTES*4;
+		case 14: // not <a> <b> 
+			if(!VALID_REGISTER(*(uint16_t*)(buffer+i+REG_SIZE_BYTES))) {
+				exit(-1);
+			}
+			a = *(uint16_t*)(buffer+i+REG_SIZE_BYTES)-32768;
+			b = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES*2));
+			b = ~b;
+			set_register(reg, a, &b, sizeof(uint16_t));
+			return REG_SIZE_BYTES*3;
+		case 15: // rmem <a> <b> 
+			if(!VALID_REGISTER(*(uint16_t*)(buffer+i+REG_SIZE_BYTES))) {
+				exit(-1);
+			}
+			a = *(uint16_t*)(buffer+i+REG_SIZE_BYTES)-32768;
+			if(!VALID_MEMORY(*(uint16_t*)(buffer+i+REG_SIZE_BYTES*2))) {
+				exit(-1);
+			}
+			b = *(uint16_t*)(buffer+i+REG_SIZE_BYTES*2);
+			set_register(reg, a, &b, sizeof(uint16_t));
+			return REG_SIZE_BYTES*3;
+		case 16: // wmem <a> <b>
+			if(!VALID_MEMORY(*(uint16_t*)(buffer+i+REG_SIZE_BYTES))) {
+				exit(-1);
+			}
+			a = *(uint16_t*)(buffer+i+REG_SIZE_BYTES);
+			b = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES*2));
+			//memcpy(buffer+a, 
+			return REG_SIZE_BYTES*3;
+		case 17:
+			if (!VALID_MEMORY(*(uint16_t*)(buffer+i+REG_SIZE_BYTES))) {
+				exit(-1);
+			}
+			b = i + REG_SIZE_BYTES*2;
+			push_stack(stack, NULL, &b, sizeof(uint16_t));
+			return (*(int16_t*)(buffer+i+REG_SIZE_BYTES))-i;
+		case 18:
+			pop_stack(
+		case 19: 
+			a = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES));
+			fprintf(stdout, "%c",a);
+			return REG_SIZE_BYTES*2;
+		case 20:
+			
+		case 21: // nop
+			return REG_SIZE_BYTES;		
 		default: // invalid instruction
+			fprintf(stderr, "Invalid instruction\n");
 			exit(-1);
 
 	}
