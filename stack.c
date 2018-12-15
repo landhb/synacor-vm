@@ -57,8 +57,19 @@ int push_stack(stack_info * stack, registers * reg, void * data, int reg_num) {
 /*
  * Pop an item from the stack into a register
  */ 
-int pop_stack(stack_info * stack, registers * reg, int reg_num) {
-	set_register(reg, reg_num, stack->mem + REG_SIZE_BYTES*(stack->num_elements-1), REG_SIZE_BYTES);
+int pop_stack(stack_info * stack, registers * reg, uint16_t * val, int reg_num) {
+	if(stack->num_elements <=0) {
+		return -1;
+	}
+	
+	if(!val) {	
+		set_register(reg, reg_num, stack->mem + REG_SIZE_BYTES*(stack->num_elements-1), REG_SIZE_BYTES);
+		stack->num_elements--;
+		return 0;
+	}
+	//printf("before: %d\n", *val);
+	memcpy(val, stack->mem + REG_SIZE_BYTES*(stack->num_elements-1), sizeof(uint16_t));
+	//printf("after: %d\n", *val);
 	stack->num_elements--;
 	return 0;
 }

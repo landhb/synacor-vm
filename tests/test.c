@@ -76,7 +76,7 @@ describe(stack) {
 			asserteq_buf(stack->mem, tmp, REG_SIZE_BYTES);
 
 			// pop off stack into res
-			pop_stack(stack, reg, 1);  // pop stack item into r1
+			pop_stack(stack, reg, NULL, 1);  // pop stack item into r1
 			get_register(reg, 1, res); // place r1 into res
 			asserteq_buf(res, tmp, REG_SIZE_BYTES); //cmp res to tmp
 			defer(cleanup_stack(stack));
@@ -106,7 +106,7 @@ describe(stack) {
 			while(stack->num_elements > 0) {
 
 				// pop off stack
-				pop_stack(stack, reg, 1);
+				pop_stack(stack, reg, NULL,1);
 				get_register(reg, 1, res);
 				asserteq_buf(res, tmp, REG_SIZE_BYTES);
 			}
@@ -155,7 +155,7 @@ describe(instructions) {
 		char *buf,*res;
 		buf = malloc(6);
 		res = malloc(REG_SIZE_BYTES);
-		memcpy(buf, "\x01\x00\x01\x00\x04\x00", 6); // set 0x0001 0x0004
+		memcpy(buf, "\x01\x00\x01\x80\x04\x00", 6); // set r1 0x0004
 		
 		// should return 6
 		asserteq(run_instruction(buf, 0, reg, stack),6);	
@@ -296,15 +296,15 @@ describe(instructions) {
 
 		// test instruction
 		char *buf;
-		buf = malloc(0x20);
+		buf = malloc(0x20*REG_SIZE_BYTES);
 		memcpy(buf, "\x06\x00\x10\x00", 4); // jmp 0x0010
 		
-		// should return 0x0010-0 = 16
-		asserteq(run_instruction(buf, 0, reg, stack),16);	
+		// should return 0x0010-0 = 16*REG_SIZE_BYTES
+		asserteq(run_instruction(buf, 0, reg, stack),16*REG_SIZE_BYTES);	
 
-		// test jumping back, should return 0x0010-0x0005 = -11	
-		memcpy(buf+0x0010, "\x06\x00\x05\x00", 4); // jmp 0x0005
-		asserteq(run_instruction(buf, 0x0010, reg, stack),-11);	
+		// test jumping back, should return 0x0010-0x0005 = -11*REG_SIZE_BYTES	
+		memcpy(buf+0x0010*REG_SIZE_BYTES, "\x06\x00\x05\x00", 4); // jmp 0x0005
+		asserteq(run_instruction(buf, 0x0010*REG_SIZE_BYTES, reg, stack),-11*REG_SIZE_BYTES);	
 	
 		defer(free(buf));
 		defer(cleanup_stack(stack));
@@ -317,15 +317,15 @@ describe(instructions) {
 
 		// test instruction
 		char *buf;
-		buf = malloc(0x20);
+		buf = malloc(0x20*REG_SIZE_BYTES);
 		memcpy(buf, "\x07\x00\x01\x00\x10\x00", 6); // jt 0x0001 0x0010
 		
-		// should jump, return 0x0010-0 = 16
-		asserteq(run_instruction(buf, 0, reg, stack),16);	
+		// should jump, return 0x0010-0 = 16*REG_SIZE_BYTES
+		asserteq(run_instruction(buf, 0, reg, stack),16*REG_SIZE_BYTES);	
 
 		// test <a>=0, should not jump, return 6	
-		memcpy(buf+0x0010, "\x07\x00\x00\x00\x05\x00", 4); 
-		asserteq(run_instruction(buf, 0x0010, reg, stack),6);	
+		memcpy(buf+0x0010*REG_SIZE_BYTES, "\x07\x00\x00\x00\x05\x00", 4); 
+		asserteq(run_instruction(buf, 0x0010*REG_SIZE_BYTES, reg, stack),6);	
 	
 		defer(free(buf));
 		defer(cleanup_stack(stack));
@@ -338,15 +338,15 @@ describe(instructions) {
 
 		// test instruction
 		char *buf;
-		buf = malloc(0x20);
+		buf = malloc(0x20*REG_SIZE_BYTES);
 		memcpy(buf, "\x08\x00\x00\x00\x10\x00", 6); // jf 0x0000 0x0010
 		
-		// should jump, return 0x0010-0 = 16
-		asserteq(run_instruction(buf, 0, reg, stack),16);	
+		// should jump, return 0x0010-0 = 16*REG_SIZE_BYTES
+		asserteq(run_instruction(buf, 0, reg, stack),16*REG_SIZE_BYTES);	
 
 		// test <a>!=0, should not jump, return 6	
-		memcpy(buf+0x0010, "\x08\x00\x01\x00\x05\x00", 4); 
-		asserteq(run_instruction(buf, 0x0010, reg, stack),6);	
+		memcpy(buf+0x0010*REG_SIZE_BYTES, "\x08\x00\x01\x00\x05\x00", 4); 
+		asserteq(run_instruction(buf, 0x0010*REG_SIZE_BYTES, reg, stack),6);	
 	
 		defer(free(buf));
 		defer(cleanup_stack(stack));

@@ -13,10 +13,12 @@
 #define INIT_STACK_SIZE 80
 #define STACK_RESIZE 3
 
+#define VM_MEM_SIZE 32768*REG_SIZE_BYTES // 15 bit addressable
+
 #define GET_RIGHTMOST_16_BITS(x) ((x) & (unsigned int)0x0000FFFF)
 #define VALID_REGISTER(x) ((x) <= 32775 && (x) >= 32768)
 #define VALID_MEMORY(x) ((x) <= 32767 && (x) >= 0)
-#define VIRT_TO_PHYS(x) ((x)
+#define VIRT_TO_PHYS(x) ((x)*REG_SIZE_BYTES)
 
 /*
  * Stack abstraction
@@ -47,7 +49,7 @@ typedef struct registers registers;
 // stack primatives
 stack_info * stack_init(int size);
 int push_stack(stack_info * stack, registers * reg, void * data,int reg_num);
-int pop_stack(stack_info * stack, registers * reg, int reg_num);
+int pop_stack(stack_info * stack, registers * reg, uint16_t *val, int reg_num);
 void cleanup_stack(stack_info * stack);
 void print_stack(stack_info * stack);
 
@@ -55,6 +57,7 @@ void print_stack(stack_info * stack);
 int set_register(registers * reg, int num, void * data, int len);
 int get_register(registers * reg, int num, void * data);
 uint16_t get_reg_immediate(registers * reg, uint16_t val);
+void set_reg_memory(registers * reg, char * buffer, uint16_t *ch, uint16_t val);
 
 // instructions
 int run_instruction(char * buffer, int i, registers * reg, stack_info * stack);
