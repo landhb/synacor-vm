@@ -67,9 +67,7 @@ int pop_stack(stack_info * stack, registers * reg, uint16_t * val, int reg_num) 
 		stack->num_elements--;
 		return 0;
 	}
-	//printf("before: %d\n", *val);
 	memcpy(val, stack->mem + REG_SIZE_BYTES*(stack->num_elements-1), sizeof(uint16_t));
-	//printf("after: %d\n", *val);
 	stack->num_elements--;
 	return 0;
 }

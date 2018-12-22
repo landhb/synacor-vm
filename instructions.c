@@ -2,6 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+// global stdin/stdout redirection
+FILE * in;
+FILE * out;
+
 int parse_file(FILE * f, registers * reg, stack_info * stack) {
 	
 	int i;
@@ -27,6 +31,10 @@ int parse_file(FILE * f, registers * reg, stack_info * stack) {
 	fclose(f);
 	printf("Read %lu bytes from disk\n", file_len);
 
+	// set io redirection
+	in = stdin;
+	out = stdout;
+
 	// step through instructions
 	i=0;
 	while(i < file_len) {
@@ -36,8 +44,6 @@ int parse_file(FILE * f, registers * reg, stack_info * stack) {
 
 	return 0;
 }
-
-
 
 
 int run_instruction(char * buffer, int i, registers * reg, stack_info * stack) {
@@ -196,10 +202,12 @@ int run_instruction(char * buffer, int i, registers * reg, stack_info * stack) {
 			return (a*REG_SIZE_BYTES)-i;	
 		case 19: // out <a> 
 			a = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES));
-			fprintf(stdout, "%c",a);
+			fprintf(out, "%c",a);
+			fflush(out);
 			return REG_SIZE_BYTES*2;
 		case 20: // in <a>
-			ch = getchar();
+			//ch = getchar();
+			ch = fgetc(in);
 			if (ch == EOF) {
 				exit(-1);
 			}

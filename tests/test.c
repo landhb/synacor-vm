@@ -7,6 +7,9 @@
 #include <sys/types.h> //pid_t datatype
 #include <sys/wait.h> //waitpid()
 
+extern FILE * in;
+extern FILE * out;
+
 describe(registers) {
 	it("write/read registers") {
 		void * buf = malloc(REG_SIZE+1);
@@ -352,6 +355,286 @@ describe(instructions) {
 		defer(cleanup_stack(stack));
 		defer(free(reg));	
 	}
+	it("add") {
+		stack_info * stack = stack_init(INIT_STACK_SIZE);
+		registers * reg = malloc(sizeof(struct registers));
+		assertneq(stack, NULL);
+
+		// test instruction
+		char *buf;
+		buf = malloc(8);
+		memcpy(buf, "\x09\x00\x01\x80\x01\x00\x10\x00", 8); // add r1 0x0001 0x0010
+		
+		// should return REG_SIZE_BYTES*4
+		asserteq(run_instruction(buf, 0, reg, stack),4*REG_SIZE_BYTES);	
+
+		// test r1 = 0x01 + 0x010 = 0x11	
+		asserteq(get_register(reg, 1, buf),0);
+		asserteq_buf(buf, "\x11\x00", REG_SIZE_BYTES);
+		defer(free(buf));
+		defer(cleanup_stack(stack));
+		defer(free(reg));	
+	}
+	it("mult") {
+		stack_info * stack = stack_init(INIT_STACK_SIZE);
+		registers * reg = malloc(sizeof(struct registers));
+		assertneq(stack, NULL);
+
+		// test instruction
+		char *buf;
+		buf = malloc(8);
+		memcpy(buf, "\x0a\x00\x01\x80\x02\x00\x10\x00", 8); // mult r1 0x0002 0x0010
+		
+		// should return REG_SIZE_BYTES*4
+		asserteq(run_instruction(buf, 0, reg, stack),4*REG_SIZE_BYTES);	
+
+		// test r1 = 0x02 * 0x010 = 0x20	
+		asserteq(get_register(reg, 1, buf),0);
+		asserteq_buf(buf, "\x20\x00", REG_SIZE_BYTES);
+		defer(free(buf));
+		defer(cleanup_stack(stack));
+		defer(free(reg));	
+	}
+	it("mod") {
+		stack_info * stack = stack_init(INIT_STACK_SIZE);
+		registers * reg = malloc(sizeof(struct registers));
+		assertneq(stack, NULL);
+
+		// test instruction
+		char *buf;
+		buf = malloc(8);
+		memcpy(buf, "\x0b\x00\x01\x80\x11\x00\x02\x00", 8); // mod r1 0x0011 0x0002 
+
+		// should return REG_SIZE_BYTES*4
+		asserteq(run_instruction(buf, 0, reg, stack),4*REG_SIZE_BYTES);	
+
+		// test r1 = 0x11 % 0x02 = 0x01	
+		asserteq(get_register(reg, 1, buf),0);
+		asserteq_buf(buf, "\x01\x00", REG_SIZE_BYTES);
+		defer(free(buf));
+		defer(cleanup_stack(stack));
+		defer(free(reg));	
+	}
+	it("and") {
+		stack_info * stack = stack_init(INIT_STACK_SIZE);
+		registers * reg = malloc(sizeof(struct registers));
+		assertneq(stack, NULL);
+
+		// test instruction
+		char *buf;
+		buf = malloc(8);
+		memcpy(buf, "\x0c\x00\x01\x80\x11\x00\x03\x00", 8); // and r1 0x0011 0x0003 
+
+		// should return REG_SIZE_BYTES*4
+		asserteq(run_instruction(buf, 0, reg, stack),4*REG_SIZE_BYTES);	
+
+		// test r1 = 0x11 & 0x03 = 0x01	
+		asserteq(get_register(reg, 1, buf),0);
+		asserteq_buf(buf, "\x01\x00", REG_SIZE_BYTES);
+		defer(free(buf));
+		defer(cleanup_stack(stack));
+		defer(free(reg));	
+	}
+	it("or") {
+		stack_info * stack = stack_init(INIT_STACK_SIZE);
+		registers * reg = malloc(sizeof(struct registers));
+		assertneq(stack, NULL);
+
+		// test instruction
+		char *buf;
+		buf = malloc(8);
+		memcpy(buf, "\x0d\x00\x01\x80\x11\x00\x02\x00", 8); // or r1 0x0011 0x0002 
+
+		// should return REG_SIZE_BYTES*4
+		asserteq(run_instruction(buf, 0, reg, stack),4*REG_SIZE_BYTES);	
+
+		// test r1 = 0x11 | 0x02 = 0x13	
+		asserteq(get_register(reg, 1, buf),0);
+		asserteq_buf(buf, "\x13\x00", REG_SIZE_BYTES);
+		defer(free(buf));
+		defer(cleanup_stack(stack));
+		defer(free(reg));	
+	}
+	it("not") {
+		stack_info * stack = stack_init(INIT_STACK_SIZE);
+		registers * reg = malloc(sizeof(struct registers));
+		assertneq(stack, NULL);
+
+		// test instruction
+		char *buf;
+		buf = malloc(8);
+		memcpy(buf, "\x0e\x00\x01\x80\x11\x11", 6); // not r1 0x1111 
+
+		// should return REG_SIZE_BYTES*3
+		asserteq(run_instruction(buf, 0, reg, stack),3*REG_SIZE_BYTES);	
+
+		// test r1 = ~0x1111 & 0x7fff = 0x6EEE 	
+		asserteq(get_register(reg, 1, buf),0);
+		asserteq_buf(buf, "\xEE\x6E", REG_SIZE_BYTES);
+		defer(free(buf));
+		defer(cleanup_stack(stack));
+		defer(free(reg));	
+	}
+	it("rmem") {
+		stack_info * stack = stack_init(INIT_STACK_SIZE);
+		registers * reg = malloc(sizeof(struct registers));
+		assertneq(stack, NULL);
+
+		// test instruction
+		char *buf;
+		buf = malloc(8);
+		memcpy(buf, "\x0f\x00\x01\x80\x01\x00", 6); // rmem r1 0x1 
+
+		// should return REG_SIZE_BYTES*3
+		asserteq(run_instruction(buf, 0, reg, stack),3*REG_SIZE_BYTES);	
+
+		// test r1 = buf[2-4] 	
+		asserteq(get_register(reg, 1, buf),0);
+		asserteq_buf(buf, "\x01\x80", REG_SIZE_BYTES);
+		defer(free(buf));
+		defer(cleanup_stack(stack));
+		defer(free(reg));	
+	}
+	it("wmem") {
+		stack_info * stack = stack_init(INIT_STACK_SIZE);
+		registers * reg = malloc(sizeof(struct registers));
+		assertneq(stack, NULL);
+
+		// test instruction
+		char *buf;
+		buf = malloc(8);
+		memcpy(buf, "\x10\x00\x01\x00\x01\x80", 6); // wmem 0x1 r1 
+
+		// put test data to write into r1
+		set_register(reg, 1, "\x11\x11", REG_SIZE_BYTES);
+		
+		// should return REG_SIZE_BYTES*3
+		asserteq(run_instruction(buf, 0, reg, stack),3*REG_SIZE_BYTES);	
+
+		// test buf[2-4] = 0x1111 	
+		asserteq_buf(buf+0x2, "\x11\x11", REG_SIZE_BYTES);
+		defer(free(buf));
+		defer(cleanup_stack(stack));
+		defer(free(reg));	
+	}
+	it("call") {
+		stack_info * stack = stack_init(INIT_STACK_SIZE);
+		registers * reg = malloc(sizeof(struct registers));
+		assertneq(stack, NULL);
+
+		// test instruction
+		char *buf;
+		buf = malloc(4);
+		memcpy(buf, "\x11\x00\x00\x00", 4); // call 0x0000 
+
+		// should return 0
+		asserteq(run_instruction(buf, 0, reg, stack),0);	
+
+		// check that next instruction 0x0002 was pushed onto the stack
+		asserteq_buf(stack->mem+(stack->num_elements-1)*REG_SIZE_BYTES, "\x02\x00", REG_SIZE_BYTES);
+		defer(free(buf));
+		defer(cleanup_stack(stack));
+		defer(free(reg));	
+	}
+	it("ret") {
+		stack_info * stack = stack_init(INIT_STACK_SIZE);
+		registers * reg = malloc(sizeof(struct registers));
+		assertneq(stack, NULL);
+
+		// test instruction
+		char *buf;
+		buf = malloc(4);
+		memcpy(buf, "\x11\x00\x00\x00", 4); // call 0x0000  
+
+		// should return 0
+		asserteq(run_instruction(buf, 0, reg, stack),0);	
+
+		// check that next instruction 0x0002 was pushed onto the stack
+		asserteq_buf(stack->mem+(stack->num_elements-1)*REG_SIZE_BYTES, "\x02\x00", REG_SIZE_BYTES);
+		
+		// now for the ret, should return back to 0x0002
+		memcpy(buf, "\x12\x00", 2);
+		asserteq(run_instruction(buf, 0, reg, stack),0x02*REG_SIZE_BYTES);	
+		
+		defer(free(buf));
+		defer(cleanup_stack(stack));
+		defer(free(reg));	
+	}
+	it("out") {
+		stack_info * stack = stack_init(INIT_STACK_SIZE);
+		registers * reg = malloc(sizeof(struct registers));
+		assertneq(stack, NULL);
+
+		// test instruction
+		char *buf,*outbuf;
+		size_t alloc_size;
+		buf = malloc(4);
+		memcpy(buf, "\x13\x00\x65\x00", 4); // out 'A' 
+
+		// open a FILE pointer to our buffer
+		out = open_memstream(&outbuf, &alloc_size);
+		if(out == NULL){
+			printf("error opening memstream\n");
+		}
+		// should return 2*REG_SIZE_BYTES
+		asserteq(run_instruction(buf, 0, reg, stack),2*REG_SIZE_BYTES);			
+		asserteq_buf(outbuf, "\x65", 1);
+
+		defer(free(outbuf));
+		defer(fclose(out));
+		defer(free(buf));
+		defer(cleanup_stack(stack));
+		defer(free(reg));	
+	}/*	
+	it("in") {
+		stack_info * stack = stack_init(INIT_STACK_SIZE);
+		registers * reg = malloc(sizeof(struct registers));
+		assertneq(stack, NULL);
+
+		// test instruction
+		char *buf,*inbuf;
+		size_t alloc_size;
+		buf = malloc(4);
+		memcpy(buf, "\x14\x00\x01\x80", 4); // in r1  
+		
+		// open a FILE pointer to our buffer
+		in = open_memstream(&inbuf, &alloc_size);
+		if(in == NULL) {
+			printf("error opening memstream\n");
+		}
+
+		// should return REG_SIZE_BYTES
+		in = stdin;
+		asserteq(run_instruction(buf, 0, reg, stack),2*REG_SIZE_BYTES);	
+		//fprintf(in, "%c", 'A'); // write 'A' to FILE * in
+		//fwrite("A", 1, 1, in);
+		
+		// check that 'A' is now in r1
+		
+
+		defer(free(buf));
+		defer(cleanup_stack(stack));
+		defer(free(reg));	
+
+	}*/	
+	it("nop") {
+		stack_info * stack = stack_init(INIT_STACK_SIZE);
+		registers * reg = malloc(sizeof(struct registers));
+		assertneq(stack, NULL);
+
+		// test instruction
+		char *buf;
+		buf = malloc(4);
+		memcpy(buf, "\x15\x00", 2); // nop  
+
+		// should return REG_SIZE_BYTES
+		asserteq(run_instruction(buf, 0, reg, stack),REG_SIZE_BYTES);	
+		defer(free(buf));
+		defer(cleanup_stack(stack));
+		defer(free(reg));	
+
+	}	
+
 
 }
 
