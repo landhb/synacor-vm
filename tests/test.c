@@ -585,7 +585,7 @@ describe(instructions) {
 		defer(free(buf));
 		defer(cleanup_stack(stack));
 		defer(free(reg));	
-	}/*	
+	}	
 	it("in") {
 		stack_info * stack = stack_init(INIT_STACK_SIZE);
 		registers * reg = malloc(sizeof(struct registers));
@@ -603,20 +603,21 @@ describe(instructions) {
 			printf("error opening memstream\n");
 		}
 
-		// should return REG_SIZE_BYTES
-		in = stdin;
+		fprintf(in, "%c", 'A');  // write 'A' to FILE * in
 		asserteq(run_instruction(buf, 0, reg, stack),2*REG_SIZE_BYTES);	
-		//fprintf(in, "%c", 'A'); // write 'A' to FILE * in
-		//fwrite("A", 1, 1, in);
+		
 		
 		// check that 'A' is now in r1
-		
+		asserteq(get_register(reg, 1, buf),0);
+		asserteq_buf(buf, "A", 1);
 
+		defer(free(inbuf));
+		defer(fclose(in));
 		defer(free(buf));
 		defer(cleanup_stack(stack));
 		defer(free(reg));	
 
-	}*/	
+	}	
 	it("nop") {
 		stack_info * stack = stack_init(INIT_STACK_SIZE);
 		registers * reg = malloc(sizeof(struct registers));

@@ -206,12 +206,12 @@ int run_instruction(char * buffer, int i, registers * reg, stack_info * stack) {
 			fflush(out);
 			return REG_SIZE_BYTES*2;
 		case 20: // in <a>
-			//ch = getchar();
+			a = *(uint16_t*)(buffer+i+REG_SIZE_BYTES);
 			ch = fgetc(in);
 			if (ch == EOF) {
 				exit(-1);
 			}
-			set_reg_memory(reg, buffer, (uint16_t*)&ch, 1);
+			set_reg_memory(reg, buffer, (uint16_t*)&ch, a);
 			return REG_SIZE_BYTES*2;
 		case 21: // nop
 			return REG_SIZE_BYTES;		
