@@ -1,6 +1,6 @@
 # Test Driven Development Exercise - Synacor VM
 
-This repo contains an implementation of the Synacor Challenge VM with tests written using the Snow library. A blog post on this can be located here.
+This repo contains an implementation of the Synacor Challenge VM with tests written using the Snow library. A blog post about the development can be located here.
 
 ### == architecture ==
 - three storage regions
@@ -28,6 +28,7 @@ This repo contains an implementation of the Synacor Challenge VM with tests writ
   - Output to the terminal the character with the ascii code contained in register 0.
 
 ### == opcode listing ==
+```
 halt: 0
   stop execution and terminate the program
 set: 1 a b
@@ -72,3 +73,4 @@ in: 20 a
   read a character from the terminal and write its ascii code to <a>; it can be assumed that once input starts, it will continue until a newline is encountered; this means that you can safely read whole lines from the keyboard and trust that they will be fully read
 noop: 21
   no operation
+```
