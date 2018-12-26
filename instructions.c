@@ -6,45 +6,6 @@
 FILE * in;
 FILE * out;
 
-int parse_file(FILE * f, registers * reg, stack_info * stack) {
-	
-	int i;
-	char* buffer;
-	unsigned long file_len;
-	
-	// get filesize
-	fseek(f, 0, SEEK_END);
-	file_len=ftell(f);
-	fseek(f, 0, SEEK_SET);
-	if(file_len <= 0) {
-		return -1;
-	}
-
-	// create memory space for the "process"
-	buffer = malloc(VM_MEM_SIZE);
-	if(!buffer) {
-		return -1;
-	}
-
-	// read the entire file into memory
-	fread(buffer, file_len, 1, f);
-	fclose(f);
-	printf("Read %lu bytes from disk\n", file_len);
-
-	// set io redirection
-	in = stdin;
-	out = stdout;
-
-	// step through instructions
-	i=0;
-	while(i < file_len) {
-		//printf("ip @ %d, inst: %d\n", i, (unsigned short)buffer[i]);
-		i+=run_instruction(buffer, i, reg, stack);	
-	}
-
-	return 0;
-}
-
 
 int run_instruction(char * buffer, int i, registers * reg, stack_info * stack) {
 	uint16_t a = 0;
@@ -55,36 +16,28 @@ int run_instruction(char * buffer, int i, registers * reg, stack_info * stack) {
 		
 		case 0: //halt
 			exit(0);
-		
 		case 1: // set register <a> to <b>
 			a = *(uint16_t*)(buffer+i+REG_SIZE_BYTES);
-                        if(!VALID_REGISTER(a)) {
+			if(!VALID_REGISTER(a)) {
 				exit(-1);
 			}
 			b = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES*2));
 			set_register(reg, a-32768, &b, REG_SIZE_BYTES);
-			return REG_SIZE_BYTES*3;
-		
+			return REG_SIZE_BYTES*3;	
 		case 2: // push <a>
-			if(*(uint16_t*)(buffer+i+REG_SIZE_BYTES) < 32767) {
-				// push memory
-				push_stack(stack, NULL, &buffer[i+REG_SIZE_BYTES], 0);
-			}
-			else if (*(uint16_t*)(buffer+i+REG_SIZE_BYTES) <= 32775) {
-				// push register
-				push_stack(stack, reg, NULL,*(uint16_t*)(buffer+i+REG_SIZE_BYTES)-32768);
+			a = *(uint16_t*)(buffer+i+REG_SIZE_BYTES);
+			if(VALID_MEMORY(a)) {
+				push_stack(stack, NULL, &a, 0);
+			} else if (VALID_REGISTER(a)) {
+				push_stack(stack, reg, NULL,a-32768);
 			} 
-			// TODO? exit on invalid address/register
 			return REG_SIZE_BYTES*2;
-	
 		case 3: // pop <a>
-			if(VALID_REGISTER(*(uint16_t*)(buffer+i+REG_SIZE_BYTES))) {
-				
+			a = *(uint16_t*)(buffer+i+REG_SIZE_BYTES);
+			if(VALID_REGISTER(a)) {	
 				pop_stack(stack, reg, NULL,*(uint16_t*)(buffer+i+REG_SIZE_BYTES)-32768); 
 			}
-			// TODO? exit on invalid register
 			return REG_SIZE_BYTES*2;			
-
 		case 4: // eq a b c (set register a to 1 if b = c)
 			if(!VALID_REGISTER(*(uint16_t*)(buffer+i+REG_SIZE_BYTES))) {
 				exit(-1);
@@ -94,7 +47,6 @@ int run_instruction(char * buffer, int i, registers * reg, stack_info * stack) {
 			c = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES*3));	
 			set_register(reg, a, b==c ? "\x01\x00" : "\x00\x00", REG_SIZE_BYTES);
 			return REG_SIZE_BYTES*4;
-	
 		case 5: // gt a b c (set register a to 1 if b > c)
 			if(!VALID_REGISTER(*(uint16_t*)(buffer+i+REG_SIZE_BYTES))) {
 				exit(-1);
@@ -104,31 +56,30 @@ int run_instruction(char * buffer, int i, registers * reg, stack_info * stack) {
 			c = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES*3));
 			set_register(reg, a, b > c ? "\x01\x00" : "\x00\x00", REG_SIZE_BYTES);
 			return REG_SIZE_BYTES*4;
-		
 		case 6: // jmp <a>
-			if (!VALID_MEMORY(*(uint16_t*)(buffer+i+REG_SIZE_BYTES))) {
+			a = *(uint16_t*)(buffer+i+REG_SIZE_BYTES);
+			if (!VALID_MEMORY(a)) {
 				exit(-1);
 			}
-			return ((*(int16_t*)(buffer+i+REG_SIZE_BYTES))*REG_SIZE_BYTES)-i;
-
+			return (a*REG_SIZE_BYTES)-i;
 		case 7: // jt <a> <b> (if a !=0 jmp <b>)
 			a = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES));
+			b = *(uint16_t*)(buffer+i+REG_SIZE_BYTES*2);
 			if(a == 0)
 				return REG_SIZE_BYTES*3;
-			if (!VALID_MEMORY(*(uint16_t*)(buffer+i+REG_SIZE_BYTES*2))) {
-                                exit(-1);
-                        }
-			return ((*(int16_t*)(buffer+i+REG_SIZE_BYTES*2))*REG_SIZE_BYTES)-i;
-		
+			if (!VALID_MEMORY(b)) {
+				exit(-1);
+			}
+			return (b*REG_SIZE_BYTES)-i;
 		case 8: // jf <a> <b> (if a == 0 jmp <b>)
 			a = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES));
-                        if(a != 0) 
-                                return REG_SIZE_BYTES*3;
-                        if (!VALID_MEMORY(*(uint16_t*)(buffer+i+REG_SIZE_BYTES*2))) {
-                                exit(-1);
-                        }
-                        return ((*(int16_t*)(buffer+i+REG_SIZE_BYTES*2))*REG_SIZE_BYTES)-i;
-
+			b = *(uint16_t*)(buffer+i+REG_SIZE_BYTES*2);
+			if(a != 0) 
+				return REG_SIZE_BYTES*3;
+			if (!VALID_MEMORY(b)) {
+				exit(-1);
+			}
+			return (b*REG_SIZE_BYTES)-i;
 		case 9: // add <a> <b> <c>
 			a = *(uint16_t*)(buffer+i+REG_SIZE_BYTES);
 			b = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES*2));
