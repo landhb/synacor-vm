@@ -15,16 +15,16 @@ all: vm_release test_noasan
 debug: vm_debug test
 
 
-vm_release: stack_noasan.o registers_noasan.o instructions_noasan.o main_noasan.o
+vm_release: src/stack_noasan.o src/registers_noasan.o src/instructions_noasan.o src/main_noasan.o
 	$(CC) -o $@ $(CFLAGS) $^ $(LDFLAGS)
 
-vm_debug: stack.o registers.o instructions.o main.o
+vm_debug: src/stack.o src/registers.o src/instructions.o src/main.o
 	$(CC) -o $@ $(CFLAGS) $(ASAN_FLAGS) $^ $(LDFLAGS) $(ASAN_LIBS)
 
-test: stack.o registers.o instructions.o tests/test.o
+test: src/stack.o src/registers.o src/instructions.o tests/test.o
 	$(CC) -o $@ $(CFLAGS) $(ASAN_FLAGS) $^ $(LDFLAGS) $(ASAN_LIBS)
 	
-test_noasan: stack_noasan.o registers_noasan.o instructions_noasan.o tests/test_noasan.o
+test_noasan: src/stack_noasan.o src/registers_noasan.o src/instructions_noasan.o tests/test_noasan.o
 	$(CC) -o $@ $(CFLAGS) $^ $(LDFLAGS) 
 
 

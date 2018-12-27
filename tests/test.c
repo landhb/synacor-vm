@@ -1,4 +1,4 @@
-#include "../vm.h"
+#include "../src/vm.h"
 #include "snow.h"
 #include <stdio.h>
 #include <stdlib.h>
