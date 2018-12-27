@@ -37,5 +37,5 @@ test_noasan: src/stack_noasan.o src/registers_noasan.o src/instructions_noasan.o
 .PHONY: clean
 
 clean:
-	rm -fr *.o test test_noasan vm_release vm_debug tests/test.o 
+	rm -fr src/*.o test test_noasan vm_release vm_debug tests/test.o 
 
