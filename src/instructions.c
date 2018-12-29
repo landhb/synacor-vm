@@ -25,12 +25,8 @@ int run_instruction(char * buffer, int i, registers * reg, stack_info * stack) {
 			set_register(reg, a-32768, &b, REG_SIZE_BYTES);
 			return REG_SIZE_BYTES*3;	
 		case 2: // push <a>
-			a = *(uint16_t*)(buffer+i+REG_SIZE_BYTES);
-			if(VALID_MEMORY(a)) {
-				push_stack(stack, NULL, &a, 0);
-			} else if (VALID_REGISTER(a)) {
-				push_stack(stack, reg, NULL,a-32768);
-			} 
+			a = get_reg_immediate(reg, *(uint16_t*)(buffer+i+REG_SIZE_BYTES));
+			push_stack(stack, &a);
 			return REG_SIZE_BYTES*2;
 		case 3: // pop <a>
 			a = *(uint16_t*)(buffer+i+REG_SIZE_BYTES);
@@ -145,7 +141,7 @@ int run_instruction(char * buffer, int i, registers * reg, stack_info * stack) {
 			}
 			b = i + REG_SIZE_BYTES*2;
 			b /= REG_SIZE_BYTES; // next instruction
-			push_stack(stack, NULL, &b, sizeof(uint16_t));
+			push_stack(stack, &b);
 			return (a*REG_SIZE_BYTES)-i;
 		case 18: // ret 
 			if(pop_stack(stack,NULL,&a,0) < 0)

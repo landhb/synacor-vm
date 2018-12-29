@@ -28,7 +28,7 @@ stack_info * stack_init(int size) {
 /*
  * Push an item onto the stack from a register, resize if necessary
  */
-int push_stack(stack_info * stack, registers * reg, void * data, int reg_num) {
+int push_stack(stack_info * stack, void * data) {
 	
 	char * old_mem;
 	
@@ -43,11 +43,7 @@ int push_stack(stack_info * stack, registers * reg, void * data, int reg_num) {
 		}
 	}
 
-	// push register onto stack
-	if(reg != NULL && reg_num < 8 && reg_num >= 0)
-		get_register(reg, reg_num, stack->mem + REG_SIZE_BYTES*stack->num_elements); 
-	else if (data != NULL) 
-		memcpy(stack->mem + (stack->num_elements)*REG_SIZE_BYTES, data, REG_SIZE_BYTES);
+	memcpy(stack->mem + (stack->num_elements)*REG_SIZE_BYTES, data, REG_SIZE_BYTES);
 	stack->num_elements++;
 	return 0;
 }

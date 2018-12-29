@@ -48,7 +48,7 @@ typedef struct registers registers;
 
 // stack primatives
 stack_info * stack_init(int size);
-int push_stack(stack_info * stack, registers * reg, void * data,int reg_num);
+int push_stack(stack_info * stack, void * data);
 int pop_stack(stack_info * stack, registers * reg, uint16_t *val, int reg_num);
 void cleanup_stack(stack_info * stack);
 void print_stack(stack_info * stack);

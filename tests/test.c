@@ -52,10 +52,9 @@ describe(stack) {
 			char * tmp;
 			tmp = calloc(1,REG_SIZE);
 			memcpy(tmp, "12345678912345600", REG_SIZE_BYTES);
-			set_register(reg, 0, tmp, REG_SIZE_BYTES);
 
 			// push onto stack
-			asserteq(push_stack(stack,reg, NULL,0),0);
+			asserteq(push_stack(stack,tmp),0);
 			asserteq_buf(stack->mem, tmp, REG_SIZE_BYTES);
 			defer(cleanup_stack(stack));
 			defer(free(reg));
@@ -72,10 +71,9 @@ describe(stack) {
 			tmp = calloc(1,REG_SIZE);
 			res = calloc(1,REG_SIZE);
 			memcpy(tmp, "12345678912345600", REG_SIZE-1);
-			set_register(reg, 0, tmp, REG_SIZE_BYTES);
 			
 			// push tmp onto stack
-			asserteq(push_stack(stack, reg, NULL,0),0);
+			asserteq(push_stack(stack, tmp),0);
 			asserteq_buf(stack->mem, tmp, REG_SIZE_BYTES);
 
 			// pop off stack into res
@@ -100,8 +98,7 @@ describe(stack) {
 		
 			// push > INIT_STACK_SIZE data onto stack
 			while(stack->total_size <= INIT_STACK_SIZE + REG_SIZE_BYTES*STACK_RESIZE*2) {
-				set_register(reg, 0, tmp, REG_SIZE_BYTES);
-				asserteq(push_stack(stack,reg,NULL,0), 0);
+				asserteq(push_stack(stack,tmp), 0);
 				asserteq_buf(stack->mem, tmp, REG_SIZE_BYTES);
 			}
 
@@ -209,8 +206,8 @@ describe(instructions) {
 		memcpy(buf, "\x03\x00\x01\x80", 4); //pop r1
 		
 		// push test data onto the stack
-		push_stack(stack, NULL, "te", REG_SIZE_BYTES);
-
+		push_stack(stack, "te");
+		
 		// pop data into register 1, should return 4
 		asserteq(run_instruction(buf, 0, reg, stack),4);	
 		
