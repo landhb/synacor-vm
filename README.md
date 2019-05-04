@@ -1,6 +1,6 @@
 # Test Driven Development Exercise - Synacor VM
 
-This repo contains an implementation of the Synacor Challenge VM with tests written using the Snow library. A blog post about the development can be located here.
+This repo contains an implementation of the Synacor Challenge VM with tests written using the Snow library. A blog post about the development can be [located here](https://blog.landhb.dev/posts/SSuxw/test+driven+development+-+synacore+vm).
 
 ### == architecture ==
 - three storage regions
