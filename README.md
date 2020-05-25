@@ -2,6 +2,8 @@
 
 This repo contains an implementation of the Synacor Challenge VM with tests written using the Snow library. A blog post about the development can be [located here](https://blog.landhb.dev/posts/SSuxw/test+driven+development+-+synacore+vm).
 
+![tests](https://raw.githubusercontent.com/landhb/synacor-vm/master/img/tests_passing.png)
+
 ### == architecture ==
 - three storage regions
   - memory with 15-bit address space storing 16-bit values
